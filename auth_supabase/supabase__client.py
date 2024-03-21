@@ -8,7 +8,9 @@ import supabase
 # load env
 load_dotenv()
 
-# setup supabase
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-supabase_client = supabase.Client(supabase_url, supabase_key)
+def supabase_client():
+    # setup supabase
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_KEY")
+    client = supabase.Client(supabase_url, supabase_key)
+    return client

@@ -75,7 +75,7 @@ class RegistrationState(State):
             return
         
         # sign up with supabase
-        supabase_client.auth.sign_up({
+        supabase_client().auth.sign_up({
             "email": email,
             "password": password,
         })
