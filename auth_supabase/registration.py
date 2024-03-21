@@ -8,19 +8,8 @@ import reflex as rx
 
 from .base_state import State
 from .login import LOGIN_ROUTE, REGISTER_ROUTE
-# from .user import User
 import re
-
-
-import supabase
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-supabase_client = supabase.Client(supabase_url, supabase_key)
+from .supabase__client import supabase_client
 
 
 
@@ -90,7 +79,6 @@ class RegistrationState(State):
             "email": email,
             "password": password,
         })
-
         # Set success and redirect to login page after a brief delay.
         self.error_message = ""
         self.success = True
@@ -107,25 +95,25 @@ def registration_page() -> rx.Component:
     Returns:
         A reflex component.
     """
-    register_form = rx.form(
-        rx.input(placeholder="email", id="email", type_="email"),
-        rx.password(placeholder="password", id="password"),
-        rx.password(placeholder="confirm", id="confirm_password"),
-        rx.button("Register", type_="submit", is_loading=RegistrationState.is_loading,),
+    register_form = rx.chakra.form(
+        rx.chakra.input(placeholder="email", id="email", type_="email"),
+        rx.chakra.password(placeholder="password", id="password"),
+        rx.chakra.password(placeholder="confirm", id="confirm_password"),
+        rx.chakra.button("Register", type_="submit", is_loading=RegistrationState.is_loading,),
         width="80vw",
         on_submit=RegistrationState.handle_registration,
     )
     return rx.fragment(
         rx.cond(
             RegistrationState.success,
-            rx.vstack(
-                rx.text("Registration successful, check your mail to confirm signup so as to login!"),
-                rx.spinner(),
+            rx.chakra.vstack(
+                rx.chakra.text("Registration successful, check your mail to confirm signup so as to login!"),
+                rx.chakra.spinner(),
             ),
-            rx.vstack(
+            rx.chakra.vstack(
                 rx.cond(  # conditionally show error messages
                     RegistrationState.error_message != "",
-                    rx.text(RegistrationState.error_message),
+                    rx.chakra.text(RegistrationState.error_message),
                 ),
                 register_form,
                 padding_top="10vh",

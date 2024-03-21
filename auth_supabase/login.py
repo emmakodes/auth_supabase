@@ -2,17 +2,7 @@
 import reflex as rx
 
 from .base_state import State
-
-
-import supabase
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-supabase_client = supabase.Client(supabase_url, supabase_key)
+from .supabase__client import supabase_client
 
 
 
@@ -44,9 +34,9 @@ class LoginState(State):
         password = form_data["password"]
 
         try:
-            supabase_client.auth.sign_in_with_password({"email": email, "password": password})
+            user_sign_in = supabase_client.auth.sign_in_with_password({"email": email, "password": password})
+            self.auth_token = user_sign_in.session.access_token
             self.error_message = ""
-            self.is_authenticated = supabase_client.auth.get_session() is not None
             return LoginState.redir()  # type: ignore
         except:
             self.error_message = "There was a problem logging in, please try again."
@@ -63,10 +53,7 @@ class LoginState(State):
             return LoginState.redir()  # type: ignore
         page = self.get_current_page()
 
-        # is_authenticated = supabase_client.auth.get_session() is not None
-        # print('is_authenticated',is_authenticated)
-
-        if not self.is_authenticated and page != LOGIN_ROUTE:
+        if not self.token_is_valid and page != LOGIN_ROUTE:
             self.redirect_to = page
 
             # reset state variable again
@@ -91,10 +78,10 @@ def login_page() -> rx.Component:
     Returns:
         A reflex component.
     """
-    login_form = rx.form(
-        rx.input(placeholder="email", id="email", type_="email"),
-        rx.password(placeholder="password", id="password"),
-        rx.button("Login", type_="submit", is_loading=LoginState.is_loading),
+    login_form = rx.chakra.form(
+        rx.chakra.input(placeholder="email", id="email", type_="email"),
+        rx.chakra.password(placeholder="password", id="password"),
+        rx.chakra.button("Login", type_="submit", is_loading=LoginState.is_loading),
         width="80vw",
         on_submit=LoginState.on_submit,
     )
@@ -102,13 +89,13 @@ def login_page() -> rx.Component:
     return rx.fragment(
         rx.cond(
             LoginState.is_hydrated,  # type: ignore
-            rx.vstack(
+            rx.chakra.vstack(
                 rx.cond(  # conditionally show error messages
                     LoginState.error_message != "",
-                    rx.text(LoginState.error_message),
+                    rx.chakra.text(LoginState.error_message),
                 ),
                 login_form,
-                rx.link("Register", href=REGISTER_ROUTE),
+                rx.chakra.link("Register", href=REGISTER_ROUTE),
                 padding_top="10vh",
             ),
         )
@@ -129,14 +116,15 @@ def require_login(page: rx.app.ComponentCallable) -> rx.app.ComponentCallable:
     """
 
     def protected_page():
-        # is_authenticated = supabase_client.auth.get_session() is not None
         return rx.fragment(
             rx.cond(
-                State.is_hydrated & State.is_authenticated, # type: ignore
-                page(),
-                rx.center(
+                State.is_hydrated,                
+                rx.cond(
+                    State.token_is_valid, page(), login_page()
+                ), 
+                rx.chakra.center(
                     # When this spinner mounts, it will redirect to the login page
-                    rx.spinner(on_mount=LoginState.redir),
+                    rx.chakra.spinner(),
                 ),
             )
         )
