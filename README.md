@@ -7,7 +7,7 @@ supabase authentication for a reflex Python app
   
   `git clone https://github.com/emmakodes/auth_supabase.git`
 
-- change directory to reflex_ocr_system
+- change directory to auth_supabase
 
   `cd auth_supabase`
 
